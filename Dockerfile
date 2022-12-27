@@ -1,11 +1,18 @@
 FROM golang:1.13.1-buster AS build
-RUN go get github.com/michenriksen/aquatone; exit 0
+RUN go get github.com/michenriksen/aquatone \
+    ;  cd /go/src/github.com/michenriksen/aquatone \
+    && sed -i 's/Relaxed()/Relaxed/g' parsers/regex.go \
+    && go mod init \
+    && go install \
+    ;  exit 0
+
 RUN go get -u github.com/tomnomnom/httprobe; exit 0
 RUN go get github.com/tomnomnom/waybackurls; exit 0
 RUN go get github.com/OWASP/Amass; exit 0
 RUN go get -u github.com/tomnomnom/unfurl; exit 0
 ENV GO111MODULE on
 WORKDIR /go/src/github.com/OWASP/Amass
+RUN git checkout v3.2.2
 RUN go install ./...
 
 FROM ubuntu:18.04
@@ -72,6 +79,7 @@ WORKDIR $TOOLS/massdns
 RUN set -x \
     && make
 WORKDIR $TOOLS/pdlist
+RUN pip3 install setuptools-rust
 RUN set -x \
     && pip3 install -r requirements.txt \
     && python3 setup.py install
